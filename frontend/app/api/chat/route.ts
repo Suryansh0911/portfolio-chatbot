@@ -17,7 +17,6 @@ export async function POST(req: Request) {
       });
     }
 
-    // Get the latest user message
     const lastMessage = messages[messages.length - 1];
 
     const userText = (lastMessage.parts ?? [])
@@ -34,12 +33,25 @@ export async function POST(req: Request) {
     const conversationId =
       body.conversationId ?? "portfolio-web";
 
+    const backendUrl =
+      process.env.RAG_BACKEND_URL;
+
+    if (!backendUrl) {
+      throw new Error(
+        "RAG_BACKEND_URL is not configured."
+      );
+    }
+
+    const targetUrl =
+      `${backendUrl.replace(/\/$/, "")}/chat`;
+
+    console.log(
+      "Calling RAG backend:",
+      targetUrl
+    );
+
     const stream = createUIMessageStream({
       async execute({ writer }) {
-        // Use the Vercel rewrite proxy we set up, falling back to local if developing locally
-        const targetUrl = process.env.NODE_ENV === 'production' 
-          ? '/api-backend/chat' 
-          : `${process.env.RAG_BACKEND_URL || "http://127.0.0.1:8000"}/chat`;
 
         const response = await fetch(
           targetUrl,
@@ -56,17 +68,34 @@ export async function POST(req: Request) {
         );
 
         if (!response.ok) {
-          const errorText = await response.text();
+          const errorText =
+            await response.text();
+
           throw new Error(
             `FastAPI returned ${response.status}: ${errorText}`
           );
         }
 
         const data = await response.json();
-        // Extract the answer text from your FastAPI JSON response
-        const answerText = data.answer || JSON.stringify(data);
 
-        const textId = `rag-${Date.now()}`;
+        console.log(
+          "RAG backend response:",
+          data
+        );
+
+        const answerText =
+          typeof data.response === "string"
+            ? data.response
+            : "";
+
+        if (!answerText) {
+          throw new Error(
+            "AWS backend returned no 'response' field."
+          );
+        }
+
+        const textId =
+          `rag-${Date.now()}`;
 
         writer.write({
           type: "text-start",
@@ -86,25 +115,39 @@ export async function POST(req: Request) {
       },
 
       onError(error) {
-        console.error("RAG backend error:", error);
-        return "Sorry, something went wrong while processing your request.";
+        console.error(
+          "RAG backend error:",
+          error
+        );
+
+        return (
+          "Sorry, something went wrong while "
+          + "processing your request."
+        );
       },
     });
 
     return createUIMessageStreamResponse({
       stream,
     });
+
   } catch (error) {
-    console.error("Chat route error:", error);
+
+    console.error(
+      "Chat route error:",
+      error
+    );
 
     return new Response(
       JSON.stringify({
-        error: "Failed to process chat request.",
+        error:
+          "Failed to process chat request.",
       }),
       {
         status: 500,
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type":
+            "application/json",
         },
       }
     );
