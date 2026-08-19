@@ -1,0 +1,12 @@
+.venv
+.git
+.github
+.env
+__pycache__
+*.pyc
+data/vector_store
+.vscode
+.idea
+README.md
+tests
+data/resume.pdf

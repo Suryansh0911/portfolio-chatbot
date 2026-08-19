@@ -1,0 +1,69 @@
+[
+    {
+        "text": "Name: Suryansh Gupta\nEmail: suryanshgupta0911@gmail.com\nLocation: India\nLinkedIn: linkedin.com/in/suryansh-gupta-513441259\nGitHub: github.com/Suryansh0911",
+        "category": "personal"
+    },
+    {
+        "text": "Education:\nDegree: B.Tech. in Mechanical Engineering\nInstitution: Sardar Vallabhbhai National Institute of Technology (SVNIT)\nLocation: Surat, India\nStart Year: \nEnd Year: 2026\nCGPA: 8.09/10\nRelevant Coursework: Machine Learning, Data Structures & Algorithms, Probability & Statistics, Linear Algebra, Database Management Systems",
+        "category": "education"
+    },
+    {
+        "text": "Suryansh Gupta's professional experience.\nThis document describes an internship and professional work experience.\n\nCompany: SmartED Innovations\nRole: Data Science Intern\nLocation: Remote\nStart Date: Jan 2026\nEnd Date: Apr 2026\n\nInternship experience:\n- Architected end-to-end automated data ingestion and preprocessing pipelines for 58M+ retail records, implementing dynamic column mapping, time-series feature engineering, and robust cleaning workflows that reduced manual data-preparation time by 80%.\n- Applied LightGBM for large-scale sales forecasting and K-Means/DBSCAN for RFM-based customer segmentation, with emphasis on data quality and reliable analytical workflows.\n- Built interactive Streamlit/Plotly dashboards for model and pipeline metrics, supporting local model training, automated batch exports, and stakeholder reporting.\n- Developed a Retail Customer Clustering System processing 500k+ rows, resolving 135k+ missing values/outliers, applying RFM analysis and PCA, and optimizing clustering performance.\n- Built a Retail Sales Forecasting System using the M5 Walmart dataset, including automated CSV column mapping, time-series feature engineering, and real-time metric visualization.",
+        "category": "experience",
+        "company": "SmartED Innovations",
+        "role": "Data Science Intern"
+    },
+    {
+        "text": "Suryansh Gupta's professional experience.\nThis document describes an internship and professional work experience.\n\nCompany: Teachnook\nRole: AI Intern\nLocation: Remote\nStart Date: Aug 2024\nEnd Date: Sep 2024\n\nInternship experience:\n- Designed and deployed a Sentiment Analysis pipeline using Python and NLTK for text ingestion, preprocessing, and multi-class emotion/sentiment classification.\n- Implemented tokenization, stemming, stop-word removal, and Scikit-learn classifiers for automated text labeling.\n- Handled the application lifecycle from data collection and preprocessing through model evaluation and deployment.",
+        "category": "experience",
+        "company": "Teachnook",
+        "role": "AI Intern"
+    },
+    {
+        "text": "Suryansh Gupta's technical project.\nThis document describes one of his software, machine learning, NLP, or AI projects.\n\nProject Name: CS-NLP Toolkit\nDescription: In-progress reusable NLP/LLM toolkit around Hugging Face Transformers for computer-science text tasks, with experiments in pretrained-model inference and parameter-efficient fine-tuning using PEFT, LoRA, and QLoRA.\nTechnologies Used: Python, Hugging Face Transformers, PEFT, LoRA, QLoRA\nGitHub: ",
+        "category": "project",
+        "project_name": "CS-NLP Toolkit"
+    },
+    {
+        "text": "Suryansh Gupta's technical project.\nThis document describes one of his software, machine learning, NLP, or AI projects.\n\nProject Name: Local AI Companion\nDescription: Developed a local JARVIS-style assistant using an LLM served through LM Studio, SentenceTransformers embeddings, FAISS vector search, and metadata-based memory; designed for persistent retrieval over previous conversations.\nTechnologies Used: Python, LM Studio, SentenceTransformers, Embeddings, FAISS, Vector Search\nGitHub: ",
+        "category": "project",
+        "project_name": "Local AI Companion"
+    },
+    {
+        "text": "Suryansh Gupta's technical project.\nThis document describes one of his software, machine learning, NLP, or AI projects.\n\nProject Name: Rural India Translator\nDescription: Built a translation application with a FastAPI backend and React/Tailwind frontend, experimenting with Hugging Face MarianMT models and Coqui TTS for speech output.\nTechnologies Used: FastAPI, React, Tailwind, Hugging Face MarianMT, Coqui TTS\nGitHub: ",
+        "category": "project",
+        "project_name": "Rural India Translator"
+    },
+    {
+        "text": "Suryansh Gupta's technical skills and technologies.\nHe has experience and familiarity with the following technical areas, tools, frameworks, and technologies:\n\nPython, C++, SQL, Scikit-learn, Pandas, NumPy, Feature Engineering, Time-Series, Clustering, PCA, TensorFlow, Keras, LSTM, RNNs, Transformers, Hugging Face Transformers, PEFT, LoRA, QLoRA, SentenceTransformers, Embeddings, FAISS, NLTK, FastAPI, Streamlit, Git, REST APIs, LM Studio, Groq API, Vercel, Render, LangChain, LangGraph, LLM application development, LLM application deployment",
+        "category": "skills"
+    },
+    {
+        "text": "Achievement: Reduced manual data-preparation time by 80% through automated data ingestion and preprocessing workflows.",
+        "category": "achievement"
+    },
+    {
+        "text": "Achievement: Built data systems processing 58M+ retail records.",
+        "category": "achievement"
+    },
+    {
+        "text": "Achievement: Developed a customer clustering system processing 500k+ rows and resolving 135k+ missing values/outliers.",
+        "category": "achievement"
+    },
+    {
+        "text": "Certification: SmartED Certified Data Science (2026)",
+        "category": "certification"
+    },
+    {
+        "text": "Certification: Teachnook Certified Artificial Intelligence (2024)",
+        "category": "certification"
+    },
+    {
+        "text": "Certification: Generative AI Certified — NxtWave (2024)",
+        "category": "certification"
+    },
+    {
+        "text": "Professional Summary:\nMachine Learning and Generative AI-focused developer with hands-on experience in data science, NLP, large-scale data processing, and LLM workflows. Experienced with Python, SQL, Scikit-learn, TensorFlow/Keras, Hugging Face Transformers, embeddings, and vector search. Currently building LLM-based applications and exploring parameter-efficient fine-tuning with PEFT, LoRA, and QLoRA.",
+        "category": "summary"
+    }
+]
