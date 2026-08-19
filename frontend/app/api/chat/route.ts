@@ -30,96 +30,86 @@ export async function POST(req: Request) {
       });
     }
 
-    const conversationId =
-      body.conversationId ?? "portfolio-web";
-
-    const backendUrl =
-      process.env.RAG_BACKEND_URL;
+    const conversationId = body.conversationId ?? "portfolio-web";
+    const backendUrl = process.env.RAG_BACKEND_URL;
 
     if (!backendUrl) {
-      throw new Error(
-        "RAG_BACKEND_URL is not configured."
-      );
+      throw new Error("RAG_BACKEND_URL is not configured.");
     }
 
-    const targetUrl =
-      `${backendUrl.replace(/\/$/, "")}/chat`;
-
-    console.log(
-      "Calling RAG backend:",
-      targetUrl
-    );
+    const targetUrl = `${backendUrl.replace(/\/$/, "")}/chat`;
+    console.log("Calling RAG backend:", targetUrl);
 
     const stream = createUIMessageStream({
       async execute({ writer }) {
-
-        const response = await fetch(
-          targetUrl,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              message: userText,
-              conversation_id: conversationId,
-            }),
-          }
-        );
-
-        const textID = `rag-${Date.now()}`;
-
-        writer.write({
-          type: "text-start",
-          id: textID,
+        const response = await fetch(targetUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: userText,
+            conversation_id: conversationId,
+          }),
         });
 
-        // Handle Rate Limits (429) or Server Errors gracefully
-        if (response.status === 429) {
-          writer.write({
-            type: "text-delta",
-            id: textID,
-            delta: "⚠️ **Rate limit exceeded!** The AI service has hit its daily token limit. Please wait a few minutes and try again.",
-          });
-          writer.write({ type: "text-end", id: textID });
-          return;
-        }
-
-        if (!response.ok) {
-          const errorText =
-            await response.text();
-
-          throw new Error(
-            `FastAPI returned ${response.status}: ${errorText}`
-          );
-        }
-
-        const data = await response.json();
-
-        console.log(
-          "RAG backend response:",
-          data
-        );
-
-        const answerText =
-          typeof data.response === "string"
-            ? data.response
-            : "";
-
-        if (!answerText) {
-          throw new Error(
-            "AWS backend returned no 'response' field."
-          );
-        }
-
-        const textId =
-          `rag-${Date.now()}`;
+        // Initialize the stream block ONCE with a single consistent ID
+        const textId = `rag-${Date.now()}`;
 
         writer.write({
           type: "text-start",
           id: textId,
         });
 
+        const responseText = await response.text();
+        const lowerText = responseText.toLowerCase();
+
+        // 1. Check for Rate Limit (Status 429 OR text containing rate limit keywords)
+        if (
+          response.status === 429 ||
+          lowerText.includes("rate limit") ||
+          lowerText.includes("tokens per day") ||
+          lowerText.includes("429")
+        ) {
+          writer.write({
+            type: "text-delta",
+            id: textId,
+            delta: "⚠️ **Rate limit exceeded!** The AI service has hit its daily token limit. Please wait a few minutes and try again.",
+          });
+          writer.write({ type: "text-end", id: textId });
+          return;
+        }
+
+        // 2. Check for other backend errors
+        if (!response.ok) {
+          writer.write({
+            type: "text-delta",
+            id: textId,
+            delta: `⚠️ **Server Error (${response.status}):** ${responseText || "Please try again shortly."}`,
+          });
+          writer.write({ type: "text-end", id: textId });
+          console.error(`FastAPI returned ${response.status}: ${responseText}`);
+          return;
+        }
+
+        // 3. Process the successful JSON response
+        let answerText = "";
+        try {
+          const data = JSON.parse(responseText);
+          console.log("RAG backend response:", data);
+          
+          // Support multiple potential JSON keys gracefully
+          answerText = data.response || data.answer || "";
+        } catch {
+          // Fallback if the response isn't JSON for some reason
+          answerText = responseText;
+        }
+
+        if (!answerText) {
+          answerText = "⚠️ The backend returned an empty response.";
+        }
+
+        // 4. Stream the actual answer to the UI
         writer.write({
           type: "text-delta",
           id: textId,
@@ -133,39 +123,25 @@ export async function POST(req: Request) {
       },
 
       onError(error) {
-        console.error(
-          "RAG backend error:",
-          error
-        );
-
-        return (
-          "Sorry, something went wrong while "
-          + "processing your request."
-        );
+        console.error("RAG backend error:", error);
+        return "Sorry, something went wrong while processing your request.";
       },
     });
 
     return createUIMessageStreamResponse({
       stream,
     });
-
   } catch (error) {
-
-    console.error(
-      "Chat route error:",
-      error
-    );
+    console.error("Chat route error:", error);
 
     return new Response(
       JSON.stringify({
-        error:
-          "Failed to process chat request.",
+        error: "Failed to process chat request.",
       }),
       {
         status: 500,
         headers: {
-          "Content-Type":
-            "application/json",
+          "Content-Type": "application/json",
         },
       }
     );
