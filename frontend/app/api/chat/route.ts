@@ -5,9 +5,6 @@ import {
 
 export const maxDuration = 60;
 
-const BACKEND_URL =
-  process.env.RAG_BACKEND_URL || "http://127.0.0.1:8000";
-
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -39,8 +36,13 @@ export async function POST(req: Request) {
 
     const stream = createUIMessageStream({
       async execute({ writer }) {
+        // Use the Vercel rewrite proxy we set up, falling back to local if developing locally
+        const targetUrl = process.env.NODE_ENV === 'production' 
+          ? '/api-backend/chat' 
+          : `${process.env.RAG_BACKEND_URL || "http://127.0.0.1:8000"}/chat`;
+
         const response = await fetch(
-          `${BACKEND_URL}/chat/stream`,
+          targetUrl,
           {
             method: "POST",
             headers: {
@@ -55,17 +57,14 @@ export async function POST(req: Request) {
 
         if (!response.ok) {
           const errorText = await response.text();
-
           throw new Error(
             `FastAPI returned ${response.status}: ${errorText}`
           );
         }
 
-        if (!response.body) {
-          throw new Error(
-            "FastAPI returned an empty response body."
-          );
-        }
+        const data = await response.json();
+        // Extract the answer text from your FastAPI JSON response
+        const answerText = data.answer || JSON.stringify(data);
 
         const textId = `rag-${Date.now()}`;
 
@@ -74,43 +73,11 @@ export async function POST(req: Request) {
           id: textId,
         });
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-
-            if (done) {
-              break;
-            }
-
-            const chunk = decoder.decode(value, {
-              stream: true,
-            });
-
-            if (!chunk) {
-              continue;
-            }
-
-            writer.write({
-              type: "text-delta",
-              id: textId,
-              delta: chunk,
-            });
-          }
-          const finalChunk = decoder.decode();
-
-          if (finalChunk) {
-            writer.write({
-              type: "text-delta",
-              id: textId,
-              delta: finalChunk,
-            });
-          }
-        } finally {
-          reader.releaseLock();
-        }
+        writer.write({
+          type: "text-delta",
+          id: textId,
+          delta: answerText,
+        });
 
         writer.write({
           type: "text-end",
@@ -120,7 +87,6 @@ export async function POST(req: Request) {
 
       onError(error) {
         console.error("RAG backend error:", error);
-
         return "Sorry, something went wrong while processing your request.";
       },
     });

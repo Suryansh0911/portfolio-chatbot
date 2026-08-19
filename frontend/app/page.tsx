@@ -51,13 +51,9 @@ export default function Chat() {
 
     const firstUserMsg = messages.find((m) => m.role === "user");
     
-    let firstUserText = "New Conversation";
-    if (firstUserMsg?.parts) {
-      const textPart = firstUserMsg.parts.find((p) => p.type === "text");
-      if (textPart) {
-        firstUserText = textPart.text;
-      }
-    }
+    // Safely extract text using parts for UIMessage type safety
+    const textPart = firstUserMsg?.parts?.find((p) => p.type === "text");
+    const firstUserText = textPart?.text || (firstUserMsg as any)?.content || "New Conversation";
 
     const title = firstUserText.length > 25 
       ? firstUserText.slice(0, 25) + "..." 
@@ -70,7 +66,7 @@ export default function Chat() {
       if (existingIndex >= 0) {
         updatedChats[existingIndex] = { ...updatedChats[existingIndex], messages, title };
       } else {
-        updatedChats.unshift({ id: chatId as string, title, messages }); // Add to top
+        updatedChats.unshift({ id: chatId as string, title, messages });
       }
       
       localStorage.setItem("portfolio_chat_history", JSON.stringify(updatedChats));
@@ -153,7 +149,6 @@ export default function Chat() {
       >
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <h2 className="font-semibold tracking-tight">Chat History</h2>
-          {/* Mobile Close Button */}
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
           </button>
@@ -249,6 +244,11 @@ export default function Chat() {
             {messages.map((message) => {
               const isUser = message.role === "user";
 
+              // Robust extraction: handles UIMessage parts or fallbacks
+              const textContent = message.parts?.length 
+                ? message.parts.filter(p => p.type === "text").map(p => p.text).join("") 
+                : (message as any).content || "";
+
               return (
                 <div
                   key={message.id}
@@ -268,15 +268,12 @@ export default function Chat() {
                           : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tl-sm shadow-sm"
                       }`}
                     >
-                      {/* Markdown rendering logic adapted for bubbles */}
                       <div className={`max-w-none leading-relaxed ${isUser ? "whitespace-pre-wrap" : "prose prose-zinc dark:prose-invert prose-sm md:prose-base"}`}>
-                        {message.parts?.map((part, index) => {
-                          if (part.type !== "text") return null;
-                          if (isUser) {
-                            return <span key={index}>{part.text}</span>;
-                          }
-                          return <ReactMarkdown key={index}>{part.text}</ReactMarkdown>;
-                        })}
+                        {isUser ? (
+                          <span>{textContent}</span>
+                        ) : (
+                          <ReactMarkdown>{textContent}</ReactMarkdown>
+                        )}
                       </div>
                     </div>
                   </div>
