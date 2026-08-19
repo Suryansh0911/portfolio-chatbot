@@ -149,8 +149,7 @@ def classify_intent(
             f"Intent parsing failed: {e}"
         )
 
-        # Fallback if model returned just:
-        # education
+        # Fallback:
         candidate = cleaned.strip().lower()
 
         try:

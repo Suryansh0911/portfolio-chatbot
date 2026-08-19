@@ -33,7 +33,6 @@ def build_vector_store():
         texts
     )
 
-    # Recreate the collection so indexing is deterministic.
     if client.collection_exists(
         COLLECTION_NAME
     ):

@@ -34,12 +34,6 @@ export async function POST(req: Request) {
       });
     }
 
-    /*
-     * Keep one conversation ID for the browser session.
-     *
-     * For now, this is stored in the Next.js server process.
-     * Later we can move this to a proper client/server conversation ID.
-     */
     const conversationId =
       body.conversationId ?? "portfolio-web";
 
@@ -105,8 +99,6 @@ export async function POST(req: Request) {
               delta: chunk,
             });
           }
-
-          // Flush any remaining decoder content
           const finalChunk = decoder.decode();
 
           if (finalChunk) {

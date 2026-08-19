@@ -73,7 +73,6 @@ Output:
 
 
 def _clean_response(response: str) -> str:
-    # Aggressively extract JSON using regex to handle prompt injections
     json_match = re.search(r"\{.*\}", response, flags=re.DOTALL)
     if json_match:
         return json_match.group(0)

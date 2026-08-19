@@ -46,7 +46,6 @@ def clean_response(response: str) -> str:
 
     response = response.strip()
 
-    # Remove <think>...</think>
     response = re.sub(
         r"<think>.*?</think>",
         "",
@@ -54,7 +53,6 @@ def clean_response(response: str) -> str:
         flags=re.DOTALL | re.IGNORECASE
     ).strip()
 
-    # Remove ```json ... ``` or ``` ... ```
     response = re.sub(
         r"^```(?:json)?\s*",
         "",

@@ -24,9 +24,7 @@ def process_subquestion(
 
     start = time.perf_counter()
 
-    # ----------------------------------------------
     # Intent
-    # ----------------------------------------------
 
     intent_start = time.perf_counter()
 
@@ -39,9 +37,7 @@ def process_subquestion(
         f"{time.perf_counter() - intent_start:.3f}s"
     )
 
-    # ----------------------------------------------
     # Retrieval
-    # ----------------------------------------------
 
     retrieval_k = (
         6
@@ -55,9 +51,7 @@ def process_subquestion(
         intent=intent.value
     )
 
-    # ----------------------------------------------
     # Confidence
-    # ----------------------------------------------
 
     confidence = calculate_retrieval_confidence(
         results
@@ -68,9 +62,7 @@ def process_subquestion(
         f"{confidence:.3f}"
     )
 
-    # ----------------------------------------------
     # Abstention
-    # ----------------------------------------------
 
     if should_abstain(
         results,
@@ -90,9 +82,7 @@ def process_subquestion(
             )
         }
 
-    # ----------------------------------------------
     # Evidence verification
-    # ----------------------------------------------
 
     if requires_evidence_verification(
         question,
@@ -285,9 +275,7 @@ def build_messages(
 
     total_start = time.perf_counter()
 
-    # ==================================================
     # QUERY REWRITING
-    # ==================================================
 
     rewrite_start = time.perf_counter()
 
@@ -311,9 +299,7 @@ def build_messages(
         f"{rewrite_time:.3f}s"
     )
 
-    # ==================================================
     # INTENT CLASSIFICATION
-    # ==================================================
 
     intent_start = time.perf_counter()
 
@@ -340,9 +326,7 @@ def build_messages(
     print("Rewritten Query:")
     print(search_query)
 
-    # ==================================================
     # RETRIEVAL
-    # ==================================================
 
     retrieval_k = (
         6
@@ -356,9 +340,7 @@ def build_messages(
         intent=intent.value
     )
 
-    # ==================================================
     # CONFIDENCE
-    # ==================================================
 
     confidence_start = time.perf_counter()
 
@@ -380,9 +362,7 @@ def build_messages(
         f"{confidence:.3f}"
     )
 
-    # ==================================================
     # RAG PROMPT
-    # ==================================================
 
     rag_prompt = f"""
 RETRIEVED PORTFOLIO INFORMATION
@@ -523,9 +503,7 @@ def chat(
 
     total_start = time.perf_counter()
 
-    # ==================================================
     # COMPOUND QUESTION PATH
-    # ==================================================
 
     if is_likely_compound(user_message):
 
@@ -572,9 +550,7 @@ def chat(
                     subresult
                 )
 
-            # ------------------------------------------
             # Build one final synthesis request
-            # ------------------------------------------
 
             synthesis_messages = build_compound_messages(
                 user_message,
@@ -612,18 +588,14 @@ def chat(
             return answer
 
 
-    # ==================================================
     # BUILD PIPELINE
-    # ==================================================
 
     messages, context, intent, results, confidence = build_messages(
         user_message,
         history
     )
 
-    # ==================================================
     # ABSTENTION
-    # ==================================================
 
     abstention_start = time.perf_counter()
 
@@ -659,9 +631,7 @@ def chat(
             "confidently."
         )
 
-    # ==================================================
     # EVIDENCE VERIFICATION
-    # ==================================================
 
     if requires_evidence_verification(
         user_message,
@@ -709,9 +679,7 @@ def chat(
             "[TIME] Evidence verification: skipped"
         )
 
-    # ==================================================
     # EVALUATION PATH
-    # ==================================================
 
     if intent == Intent.EVALUATION:
 
@@ -782,9 +750,7 @@ def chat(
             evaluations
         )
 
-    # ==================================================
     # FINAL LLM ANSWER
-    # ==================================================
 
     generation_start = time.perf_counter()
 
@@ -811,9 +777,7 @@ def chat(
     print(repr(answer))
     print("=" * 60)
 
-    # ==================================================
     # EMPTY RESPONSE SAFETY
-    # ==================================================
 
     if not answer:
 
@@ -832,9 +796,7 @@ def chat(
             "generate a response. Please try again."
         )
 
-    # ==================================================
     # GROUNDING VERIFICATION
-    # ==================================================
 
     if requires_grounding(
         user_message,
@@ -1080,9 +1042,7 @@ def stream_chat(
 
     total_start = time.perf_counter()
 
-    # ----------------------------------------------
     # Compound Query Handling for Streams
-    # ----------------------------------------------
     if is_likely_compound(user_message):
         subquestions = decompose_question(user_message)
         if len(subquestions) > 1:
@@ -1116,9 +1076,7 @@ def stream_chat(
         history
     )
 
-    # ----------------------------------------------
     # Abstention
-    # ----------------------------------------------
 
     if should_abstain(
         results,
@@ -1133,9 +1091,7 @@ def stream_chat(
 
         return
 
-    # ----------------------------------------------
     # Evidence verification
-    # ----------------------------------------------
 
     if requires_evidence_verification(
         user_message,
@@ -1163,9 +1119,7 @@ def stream_chat(
             })
             intent = Intent.FACTUAL
 
-    # ----------------------------------------------
     # Evaluation
-    # ----------------------------------------------
 
     if intent == Intent.EVALUATION:
 
@@ -1185,9 +1139,7 @@ def stream_chat(
         yield format_multi_evaluation(evaluations)
         return
 
-    # ----------------------------------------------
     # Stream final answer
-    # ----------------------------------------------
 
     stream_filter = ThinkStreamFilter()
     full_response = ""

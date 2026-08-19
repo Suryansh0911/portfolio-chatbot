@@ -20,7 +20,6 @@ class ThinkStreamFilter:
                 )
 
                 if end == -1:
-                    # Entire chunk is still reasoning.
                     self.buffer = ""
                     break
 
@@ -37,8 +36,6 @@ class ThinkStreamFilter:
             )
 
             if start == -1:
-                # Keep a small suffix because the tag
-                # may be split across chunks.
                 safe_length = max(
                     0,
                     len(self.buffer) - 7

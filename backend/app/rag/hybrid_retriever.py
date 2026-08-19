@@ -127,9 +127,7 @@ def hybrid_retrieve(
 
     documents = load_documents()
 
-    # --------------------------------------------------
     # 1. Semantic retrieval
-    # --------------------------------------------------
 
     candidate_k = min(
     8,
@@ -146,9 +144,7 @@ def hybrid_retrieve(
         for result in semantic_results_raw
     }
 
-    # --------------------------------------------------
     # 2. BM25 retrieval
-    # --------------------------------------------------
 
     bm25 = build_bm25(documents)
 
@@ -162,9 +158,7 @@ def hybrid_retrieve(
         reverse=True
     )[:candidate_k]
 
-    # --------------------------------------------------
     # 3. Combine candidates
-    # --------------------------------------------------
 
     candidate_indices = set(
         semantic_results.keys()
@@ -174,9 +168,7 @@ def hybrid_retrieve(
         keyword_candidates
     )
 
-    # --------------------------------------------------
     # 4. Build candidate documents
-    # --------------------------------------------------
 
     results = []
 
@@ -202,9 +194,7 @@ def hybrid_retrieve(
     if not results:
         return []
 
-    # --------------------------------------------------
     # 5. Normalize semantic + keyword scores
-    # --------------------------------------------------
 
     semantic_normalized = min_max_normalize(
         [
@@ -229,9 +219,7 @@ def hybrid_retrieve(
         result["semantic_normalized"] = semantic_score
         result["keyword_normalized"] = keyword_score
 
-    # --------------------------------------------------
     # 6. Initial hybrid score
-    # --------------------------------------------------
 
     for result in results:
 
@@ -251,9 +239,7 @@ def hybrid_retrieve(
             metadata_score
         )
 
-    # --------------------------------------------------
     # 7. Candidate selection
-    # --------------------------------------------------
 
     results.sort(
         key=lambda x: x["final_score"],
@@ -262,9 +248,7 @@ def hybrid_retrieve(
 
     candidate_results = results[:8]
 
-    # --------------------------------------------------
     # 8. Cross-encoder reranking
-    # --------------------------------------------------
 
     reranked_results = rerank(
         query,
@@ -275,9 +259,7 @@ def hybrid_retrieve(
     if not reranked_results:
         return []
 
-    # --------------------------------------------------
     # 9. Normalize reranker scores
-    # --------------------------------------------------
 
     rerank_scores = [
         result.get(
@@ -291,9 +273,7 @@ def hybrid_retrieve(
         rerank_scores
     )
 
-    # --------------------------------------------------
     # 10. Final intent-aware ranking
-    # --------------------------------------------------
 
     for result, rerank_score in zip(
         reranked_results,
@@ -318,9 +298,7 @@ def hybrid_retrieve(
             0.15 * intent_score
         )
 
-    # --------------------------------------------------
     # 11. Final ranking
-    # --------------------------------------------------
 
     reranked_results.sort(
         key=lambda x: x["final_rerank_score"],

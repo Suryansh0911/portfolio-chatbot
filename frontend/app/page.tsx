@@ -5,7 +5,6 @@ import ReactMarkdown from "react-markdown";
 import { useEffect, useRef, useState } from "react";
 import type { UIMessage } from "@ai-sdk/react";
 
-// Define our saved chat structure
 interface SavedChat {
   id: string;
   title: string;
@@ -13,7 +12,6 @@ interface SavedChat {
 }
 
 export default function Chat() {
-  // We extract setMessages to allow loading past chats into the active view
   const { messages, setMessages, sendMessage, status } = useChat();
 
   const [input, setInput] = useState("");
@@ -21,19 +19,16 @@ export default function Chat() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  // New state for file uploads
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isLoading = status === "submitted" || status === "streaming";
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to the latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Load chat history from localStorage on initial mount
   useEffect(() => {
     const storedHistory = localStorage.getItem("portfolio_chat_history");
     if (storedHistory) {
@@ -45,7 +40,6 @@ export default function Chat() {
     }
   }, []);
 
-  // Save current chat to localStorage whenever messages change
   useEffect(() => {
     if (messages.length === 0) return;
 
@@ -55,7 +49,6 @@ export default function Chat() {
       setCurrentChatId(chatId);
     }
 
-    // Generate a title based on the first user message
     const firstUserMsg = messages.find((m) => m.role === "user");
     
     let firstUserText = "New Conversation";
@@ -108,7 +101,6 @@ export default function Chat() {
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
-  // Handle uploading a new resume
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -126,7 +118,7 @@ export default function Chat() {
 
       if (response.ok) {
         alert("Success! Your resume was parsed and the Vector Store is updated.");
-        startNewChat(); // Start a fresh chat so the bot uses the new context
+        startNewChat();
       } else {
         const errorData = await response.json();
         alert(`Failed to update resume: ${errorData.detail || 'Unknown error'}`);
@@ -136,7 +128,6 @@ export default function Chat() {
       alert("Network error while uploading the resume.");
     } finally {
       setIsUploading(false);
-      // Reset the file input so you can upload the same file again if needed
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
