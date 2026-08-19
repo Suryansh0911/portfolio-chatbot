@@ -67,6 +67,24 @@ export async function POST(req: Request) {
           }
         );
 
+        const textID = `rag-${Date.now()}`;
+
+        writer.write({
+          type: "text-start",
+          id: textID,
+        });
+
+        // Handle Rate Limits (429) or Server Errors gracefully
+        if (response.status === 429) {
+          writer.write({
+            type: "text-delta",
+            id: textID,
+            delta: "⚠️ **Rate limit exceeded!** The AI service has hit its daily token limit. Please wait a few minutes and try again.",
+          });
+          writer.write({ type: "text-end", id: textID });
+          return;
+        }
+
         if (!response.ok) {
           const errorText =
             await response.text();

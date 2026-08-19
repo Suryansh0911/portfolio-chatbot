@@ -1,0 +1,2 @@
+http://13.233.55.238:8000/docs#/default/chat_with_portfolio_chat_post
+https://portfolio-chatbot-suryansh.vercel.app/
