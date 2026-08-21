@@ -18,9 +18,15 @@ export default function Chat() {
   const [savedChats, setSavedChats] = useState<SavedChat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
+
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Admin password modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const isLoading = status === "submitted" || status === "streaming";
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -50,25 +56,25 @@ export default function Chat() {
     }
 
     const firstUserMsg = messages.find((m) => m.role === "user");
-    
+
     // Safely extract text using parts for UIMessage type safety
     const textPart = firstUserMsg?.parts?.find((p) => p.type === "text");
     const firstUserText = textPart?.text || (firstUserMsg as any)?.content || "New Conversation";
 
-    const title = firstUserText.length > 25 
-      ? firstUserText.slice(0, 25) + "..." 
+    const title = firstUserText.length > 25
+      ? firstUserText.slice(0, 25) + "..."
       : firstUserText;
 
     setSavedChats((prev) => {
       const existingIndex = prev.findIndex((c) => c.id === chatId);
       const updatedChats = [...prev];
-      
+
       if (existingIndex >= 0) {
         updatedChats[existingIndex] = { ...updatedChats[existingIndex], messages, title };
       } else {
         updatedChats.unshift({ id: chatId as string, title, messages });
       }
-      
+
       localStorage.setItem("portfolio_chat_history", JSON.stringify(updatedChats));
       return updatedChats;
     });
@@ -97,52 +103,79 @@ export default function Chat() {
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Fires when a file is picked — opens the password modal instead of uploading immediately
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setPendingFile(file);
+    setPasswordError("");
+    setAdminPassword("");
+    setShowPasswordModal(true);
+  };
+
+  // Fires when the modal is dismissed via Cancel or backdrop
+  const closePasswordModal = () => {
+    setShowPasswordModal(false);
+    setPendingFile(null);
+    setAdminPassword("");
+    setPasswordError("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // Fires on modal form submit — performs the actual upload with the password header
+  const submitResumeUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!pendingFile || !adminPassword) return;
 
     setIsUploading(true);
+    setPasswordError("");
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", pendingFile);
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const response = await fetch(`${apiUrl}/api/upload-resume`, {
         method: "POST",
+        headers: {
+          "x-admin-secret": adminPassword,
+        },
         body: formData,
       });
 
       if (response.ok) {
+        setShowPasswordModal(false);
+        setPendingFile(null);
+        setAdminPassword("");
         alert("Success! Your resume was parsed and the Vector Store is updated.");
         startNewChat();
+      } else if (response.status === 401) {
+        setPasswordError("Incorrect password. Try again.");
       } else {
         const errorData = await response.json();
-        alert(`Failed to update resume: ${errorData.detail || 'Unknown error'}`);
+        setPasswordError(errorData.detail || "Upload failed.");
       }
     } catch (error) {
       console.error(error);
-      alert("Network error while uploading the resume.");
+      setPasswordError("Network error while uploading the resume.");
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   return (
     <div className="flex h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans overflow-hidden">
-      
+
       {/* Sidebar Overlay for Mobile */}
       {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-20 md:hidden" 
+        <div
+          className="fixed inset-0 bg-black/50 z-20 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar / Chat History Panel */}
-      <aside 
+      <aside
         className={`absolute md:relative z-30 h-full w-64 bg-zinc-100 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
@@ -155,7 +188,7 @@ export default function Chat() {
         </div>
 
         <div className="p-4 flex flex-col gap-2">
-          <button 
+          <button
             onClick={startNewChat}
             className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-900 rounded-lg text-sm font-medium transition-colors"
           >
@@ -166,14 +199,14 @@ export default function Chat() {
 
         {/* Upload Resume Button Section */}
         <div className="px-4 pb-4 border-b border-zinc-200 dark:border-zinc-800">
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-            className="hidden" 
-            accept=".pdf,.txt,.docx" 
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            className="hidden"
+            accept=".pdf,.txt,.docx"
           />
-          <button 
+          <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
             className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
@@ -198,8 +231,8 @@ export default function Chat() {
                 key={chat.id}
                 onClick={() => loadChat(chat.id)}
                 className={`w-full text-left px-3 py-2.5 rounded-lg text-sm truncate transition-colors ${
-                  currentChatId === chat.id 
-                    ? "bg-zinc-200/80 dark:bg-zinc-800/80 font-medium" 
+                  currentChatId === chat.id
+                    ? "bg-zinc-200/80 dark:bg-zinc-800/80 font-medium"
                     : "hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400"
                 }`}
               >
@@ -212,10 +245,10 @@ export default function Chat() {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col h-full min-w-0">
-        
+
         {/* Header */}
         <header className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md z-10 shrink-0">
-          <button 
+          <button
             onClick={() => setIsSidebarOpen(true)}
             className="md:hidden mr-4 p-2 -ml-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-md"
           >
@@ -245,8 +278,8 @@ export default function Chat() {
               const isUser = message.role === "user";
 
               // Robust extraction: handles UIMessage parts or fallbacks
-              const textContent = message.parts?.length 
-                ? message.parts.filter(p => p.type === "text").map(p => p.text).join("") 
+              const textContent = message.parts?.length
+                ? message.parts.filter(p => p.type === "text").map(p => p.text).join("")
                 : (message as any).content || "";
 
               return (
@@ -254,17 +287,17 @@ export default function Chat() {
                   key={message.id}
                   className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}
                 >
-                  <div 
+                  <div
                     className={`flex flex-col space-y-1 max-w-[85%] md:max-w-[75%] ${isUser ? "items-end" : "items-start"}`}
                   >
                     <span className="text-xs text-zinc-500 font-medium px-1">
                       {isUser ? "You" : "AI Assistant"}
                     </span>
-                    
-                    <div 
+
+                    <div
                       className={`p-4 rounded-2xl ${
-                        isUser 
-                          ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-tr-sm" 
+                        isUser
+                          ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-tr-sm"
                           : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tl-sm shadow-sm"
                       }`}
                     >
@@ -328,6 +361,58 @@ export default function Chat() {
           </div>
         </div>
       </div>
+
+      {/* Admin Password Modal */}
+      {showPasswordModal && (
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+          onClick={closePasswordModal}
+        >
+          <div
+            className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-sm p-6 border border-zinc-200 dark:border-zinc-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-1">Admin verification</h3>
+            <p className="text-sm text-zinc-500 mb-4">
+              Uploading <span className="font-medium text-zinc-700 dark:text-zinc-300">{pendingFile?.name}</span> will rebuild the vector store.
+            </p>
+
+            <form onSubmit={submitResumeUpload} className="space-y-3">
+              <input
+                type="password"
+                autoFocus
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="Admin password"
+                disabled={isUploading}
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 text-sm disabled:opacity-50"
+              />
+
+              {passwordError && (
+                <p className="text-sm text-red-600 dark:text-red-400">{passwordError}</p>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={closePasswordModal}
+                  disabled={isUploading}
+                  className="flex-1 py-2.5 px-4 rounded-lg border border-zinc-300 dark:border-zinc-700 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUploading || !adminPassword}
+                  className="flex-1 py-2.5 px-4 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
+                >
+                  {isUploading ? "Verifying..." : "Confirm"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
