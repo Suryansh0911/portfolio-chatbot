@@ -831,8 +831,8 @@ def chat(
             f"Grounding Reason: "
             f"{grounding['reason']}"
         )
-
-        if grounding["verdict"] == "SUPPORTED":
+        verdict_str = str(grounding.get("verdict", "")).strip().upper()
+        if verdict_str == "SUPPORTED":
 
             total_time = (
                 time.perf_counter() - total_start
@@ -845,7 +845,7 @@ def chat(
 
             return answer
 
-        if grounding["verdict"] == "PARTIALLY_SUPPORTED":
+        if verdict_str == "PARTIALLY_SUPPORTED":
 
             total_time = (
                 time.perf_counter() - total_start
